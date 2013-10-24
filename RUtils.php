@@ -7,6 +7,12 @@ class RUtils
     const FEMALE = 2; //sex - female
     const NEUTER = 3; //sex - neuter
 
+    /**
+     * Default encoding for multibyte strings
+     * @var string
+     */
+    public static $encoding = 'UTF-8';
+
     private static $_numeral;
     private static $_dt;
     private static $_translit;
