@@ -13,7 +13,7 @@ class Dt
     public static $PREFIX_IN = "через"; //Prefix 'in' (i.e. B{in} three hours)
     public static $SUFFIX_AGO = "назад"; //Prefix 'ago' (i.e. three hours B{ago})
 
-    private static $_DAY_NAMES = array(        
+    private static $_DAY_NAMES = array(
         array('пн', 'понедельник', 'понедельник', "в\xC2\xA0"),
         array('вт', 'вторник', 'вторник', "во\xC2\xA0"),
         array('ср', 'среда', 'среду', "в\xC2\xA0"),
@@ -83,8 +83,8 @@ class Dt
 
         $search = array('D', 'l', 'M', 'F');
         $replace = array(
-            $prepos.self::$_DAY_NAMES[$weekday][0],
-            $prepos.self::$_DAY_NAMES[$weekday][$dayIdx],
+            $prepos . self::$_DAY_NAMES[$weekday][0],
+            $prepos . self::$_DAY_NAMES[$weekday][$dayIdx],
             self::$_MONTH_NAMES[$month][0],
             self::$_MONTH_NAMES[$month][$monthIdx],
         );
@@ -114,11 +114,9 @@ class Dt
             $timestamp = $dateTime;
             $dateTime = new \DateTime();
             $dateTime->setTimestamp($timestamp);
-        }
-        elseif (empty($dateTime)) {
+        } elseif (empty($dateTime)) {
             throw new \InvalidArgumentException('Date/time is empty');
-        }
-        elseif (is_string($dateTime)) {
+        } elseif (is_string($dateTime)) {
             $dateTime = new \DateTime($dateTime);
         }
 
@@ -137,7 +135,8 @@ class Dt
      * @throws \RuntimeException
      * @return string Distance of time in words
      */
-    public function distanceOfTimeInWords($toTime, $fromTime=null, $accuracy=RUtils::ACCURACY_YEAR) {
+    public function distanceOfTimeInWords($toTime, $fromTime = null, $accuracy = RUtils::ACCURACY_YEAR)
+    {
         $accuracy = (int)$accuracy;
         if ($accuracy < 1 || $accuracy > 5)
             throw new \InvalidArgumentException('Wrong accuracy value (must be 1..5)');
@@ -162,14 +161,20 @@ class Dt
         $distanceData = $this->_createDistanceData($interval, $fromCurrent);
         $words = $this->_getResultWords($accuracy, $distanceData);
 
+        if ($accuracy === RUtils::ACCURACY_YEAR) {
+            if ($key = array_search($words[0], $distanceData)) {
+                if (isset($this->rules[$key][$words[0]]))
+                    $words[0] = $this->rules[$key][$words[0]];
+            }
+        }
+
         //check short result
         if ($fromCurrent && min($accuracy, sizeof($words)) == 1) {
             //if diff expressed in one word
             $result = $this->_getOneWordResult($interval);
             if ($result) {
                 return $result;
-            }
-            elseif ($interval->days < 3) {
+            } elseif ($interval->days < 3) {
                 //if diff 1 or 2 days
                 $result = $this->_getTwoDaysResult($interval, $toTime, $timeZone);
                 if ($result)
@@ -182,6 +187,14 @@ class Dt
         return $this->_addResultSuffix($interval, $result);
     }
 
+    public $rules = array(
+        'y' => array('1 год' => 'один год'),
+        'm' => array(),
+        'd' => array(),
+        'h' => array(),
+        'i' => array('30 минут' => 'полчаса', '15 минут' => 'четверть часа'),
+    );
+
     private function _processFunctionParams($toTime, $fromTime)
     {
         $toTime = $this->_processDateTime($toTime);
@@ -191,8 +204,7 @@ class Dt
         if ($fromTime === null) {
             $fromTime = new \DateTime('now', $timeZone);
             $fromCurrent = true;
-        }
-        else {
+        } else {
             $fromTime = $this->_processDateTime($fromTime);
         }
 
@@ -256,7 +268,7 @@ class Dt
         return $this->_getLevelResult('i', $distanceData, $words, $borderField);
     }
 
-    private function _getLevelResult($fieldCode, array $distanceData, array $words=array(), $borderField=-1)
+    private function _getLevelResult($fieldCode, array $distanceData, array $words = array(), $borderField = -1)
     {
         $curPos = array_search($fieldCode, self::$_DISTANCE_FIELDS);
         if ($borderField >= $curPos)
@@ -264,12 +276,11 @@ class Dt
 
         $nextField = $borderField + 1;
         $length = sizeof(self::$_DISTANCE_FIELDS);
-        for ($i=$nextField; $i < $length; ++$i) {
+        for ($i = $nextField; $i < $length; ++$i) {
             $field = self::$_DISTANCE_FIELDS[$i];
             if ($borderField != -1 && $i > $curPos) {
                 break;
-            }
-            elseif (isset($distanceData[$field])) {
+            } elseif (isset($distanceData[$field])) {
                 $words[] = $distanceData[$field];
                 $borderField = $i;
                 break;
@@ -298,9 +309,9 @@ class Dt
     private function _addResultSuffix(\DateInterval $interval, $result)
     {
         if ($interval->invert)
-            $result = self::$PREFIX_IN.' '.$result;
+            $result = self::$PREFIX_IN . ' ' . $result;
         else
-            $result = $result.' '.self::$SUFFIX_AGO;
+            $result = $result . ' ' . self::$SUFFIX_AGO;
         return $result;
     }
 
@@ -312,8 +323,7 @@ class Dt
         if ($interval->invert == 0 && ($days == 1 || $days == 2)) {
             $variant = $days - 1;
             $result = self::$_PAST_ALTERNATIVES[$variant];
-        }
-        elseif ($interval->invert && ($days == 0 || $days == 1)) {
+        } elseif ($interval->invert && ($days == 0 || $days == 1)) {
             $tomorrow = new \DateTime('today', $timeZone);
             $tomorrow->add(new \DateInterval('P1D'));
             $afterTomorrow = new \DateTime('today', $timeZone);
